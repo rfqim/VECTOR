@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vektor Dot & Cross Product</title>
+  <title>Visualisasi 3D Interaktif: Vektor Dot & Cross Product</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -12,7 +12,6 @@
     body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background-color 0.3s, color 0.3s; }
     #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
     
-    /* Theme Light / Dark classes */
     .theme-dark { background-color: #0f172a; color: #f8fafc; }
     .theme-light { background-color: #f1f5f9; color: #0f172a; }
 
@@ -42,7 +41,7 @@
         <h1 class="text-xl font-bold flex items-center gap-2">
           <i class="fa-solid font-mono text-cyan-400">📊</i> Visualisasi Vektor 3D
         </h1>
-        <p class="text-xs opacity-70 mt-1">Studi Kasus Vektor: Dot Product & Cross Product</p>
+        <p class="text-xs opacity-70 mt-1">Studi Kasus: Penangkap Hujan (Dot) & Boom Derek (Cross)</p>
       </div>
 
       <!-- Presets & Theme Toggle -->
@@ -50,8 +49,8 @@
         <button id="btn-rain" onclick="loadPreset('rain')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow">
           🌧️ Penangkap Air Hujan (Dot Product)
         </button>
-        <button id="btn-robot" onclick="loadPreset('robot')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 transition-all">
-          🤖 Arm Robot (Cross Product)
+        <button id="btn-crane" onclick="loadPreset('crane')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 transition-all">
+          🏗️ Boom Derek (Cross Product)
         </button>
         <button id="btn-custom" onclick="loadPreset('custom')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 transition-all">
           ⚙️ Mode Bebas
@@ -77,22 +76,22 @@
         <div class="space-y-3 text-xs">
           <!-- Magnitudes -->
           <div class="flex justify-between items-center pb-2 border-b border-slate-700/50">
-            <span class="opacity-80">Magnitudo Vektor A |A|:</span>
+            <span id="label-mag-a" class="opacity-80">Magnitudo |A|:</span>
             <span id="mag-a" class="font-mono font-bold text-emerald-400">5.00</span>
           </div>
           <div class="flex justify-between items-center pb-2 border-b border-slate-700/50">
-            <span class="opacity-80">Magnitudo Vektor B |B|:</span>
+            <span id="label-mag-b" class="opacity-80">Magnitudo |B|:</span>
             <span id="mag-b" class="font-mono font-bold text-amber-400">13.00</span>
           </div>
           
           <!-- Primary Product Result -->
           <div class="p-2.5 rounded-lg bg-slate-800/60 border border-slate-700">
             <div class="flex justify-between items-center">
-              <span id="product-label" class="font-semibold text-slate-300">Dot Product (A · B):</span>
+              <span id="product-label" class="font-semibold text-slate-300">Dot Product:</span>
               <span id="product-val" class="font-mono text-base font-bold text-cyan-400">60.00</span>
             </div>
             <div id="cross-vector-display" class="hidden text-[10px] font-mono text-slate-400 mt-1">
-              Vektor Torsi τ = (0.00, 20.00, 0.00)
+              Vektor Torsi τ = (-1200, 1600, -3550) N·m
             </div>
           </div>
 
@@ -117,7 +116,7 @@
         <!-- Vector A Sliders -->
         <div class="mb-3">
           <div class="text-xs font-semibold text-emerald-400 mb-1 flex items-center justify-between">
-            <span id="vec-a-name">Vektor Normal N (3, 0, 4)</span>
+            <span id="vec-a-name">Vektor A</span>
           </div>
           <div class="grid grid-cols-3 gap-2 text-[10px]">
             <div>
@@ -138,20 +137,20 @@
         <!-- Vector B Sliders -->
         <div>
           <div class="text-xs font-semibold text-amber-400 mb-1 flex items-center justify-between">
-            <span id="vec-b-name">Vektor Air H (4, 3, 12)</span>
+            <span id="vec-b-name">Vektor B</span>
           </div>
           <div class="grid grid-cols-3 gap-2 text-[10px]">
             <div>
               <label class="block opacity-60">X</label>
-              <input type="range" id="bx" min="-15" max="15" value="4" step="1" oninput="updateFromSliders()" class="w-full accent-amber-500">
+              <input type="range" id="bx" min="-1000" max="1000" value="4" step="10" oninput="updateFromSliders()" class="w-full accent-amber-500">
             </div>
             <div>
               <label class="block opacity-60">Y</label>
-              <input type="range" id="by" min="-15" max="15" value="3" step="1" oninput="updateFromSliders()" class="w-full accent-amber-500">
+              <input type="range" id="by" min="-1000" max="1000" value="3" step="10" oninput="updateFromSliders()" class="w-full accent-amber-500">
             </div>
             <div>
               <label class="block opacity-60">Z</label>
-              <input type="range" id="bz" min="-15" max="15" value="12" step="1" oninput="updateFromSliders()" class="w-full accent-amber-500">
+              <input type="range" id="bz" min="-1000" max="1000" value="12" step="10" oninput="updateFromSliders()" class="w-full accent-amber-500">
             </div>
           </div>
         </div>
@@ -168,13 +167,14 @@
   <script>
     let scene, camera, renderer, controls;
     let arrowA, arrowB, arrowResult;
-    let rainCollectorGroup, robotArmGroup, cloudGroup;
+    let rainCollectorGroup, craneGroup, cloudGroup, rainParticlesGroup;
+    let cableMesh, cableTexture;
     let isDarkTheme = true;
 
     // Vector States
     let vecA = new THREE.Vector3(3, 0, 4);
     let vecB = new THREE.Vector3(4, 3, 12);
-    let currentMode = 'rain'; // 'rain', 'robot', 'custom'
+    let currentMode = 'rain'; // 'rain', 'crane', 'custom'
 
     function init() {
       const container = document.getElementById('canvas-container');
@@ -182,7 +182,7 @@
       // Scene
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0f172a);
-      scene.fog = new THREE.FogExp2(0x0f172a, 0.015);
+      scene.fog = new THREE.FogExp2(0x0f172a, 0.012);
 
       // Camera
       camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -211,16 +211,16 @@
       scene.add(gridHelper);
 
       // Vector Arrows setup
-      arrowA = createCustomArrow(0x10b981); // Emerald (Vector A)
-      arrowB = createCustomArrow(0xf59e0b); // Amber (Vector B)
-      arrowResult = createCustomArrow(0xa855f7); // Purple (Cross Product Result)
+      arrowA = createCustomArrow(0x10b981); // Emerald (Vector A / r)
+      arrowB = createCustomArrow(0xf59e0b); // Amber (Vector B / F)
+      arrowResult = createCustomArrow(0xa855f7); // Purple (Cross Product Result Torque)
       scene.add(arrowA);
       scene.add(arrowB);
       scene.add(arrowResult);
 
       // Build 3D Models
       buildRainCollector();
-      buildRobotArm();
+      buildCraneBoom();
 
       // Initial Preset Load
       loadPreset('rain');
@@ -258,14 +258,12 @@
         emissiveIntensity: 0.2
       });
 
-      // Shaft
       const shaftGeo = new THREE.CylinderGeometry(0.08, 0.08, 1, 16);
       shaftGeo.translate(0, 0.5, 0);
       const shaft = new THREE.Mesh(shaftGeo, material);
       shaft.name = "shaft";
       group.add(shaft);
 
-      // Head
       const headGeo = new THREE.ConeGeometry(0.22, 0.5, 16);
       headGeo.translate(0, 0.25, 0);
       const head = new THREE.Mesh(headGeo, material);
@@ -275,8 +273,9 @@
       return group;
     }
 
-    function updateArrow(arrowGroup, origin, dirVector) {
-      const len = dirVector.length();
+    function updateArrow(arrowGroup, origin, dirVector, scaleFactor = 1.0) {
+      const displayVec = dirVector.clone().multiplyScalar(scaleFactor);
+      const len = displayVec.length();
       if (len < 0.001) {
         arrowGroup.visible = false;
         return;
@@ -295,39 +294,32 @@
       head.scale.set(1, headLen / 0.5, 1);
       head.position.set(0, shaftLen, 0);
 
-      const unitDir = dirVector.clone().normalize();
+      const unitDir = displayVec.clone().normalize();
       const up = new THREE.Vector3(0, 1, 0);
       const q = new THREE.Quaternion().setFromUnitVectors(up, unitDir);
       arrowGroup.quaternion.copy(q);
     }
 
-    // --- 3D MODEL: WADAH PENANGKAP AIR HUJAN (Warna Terang) ---
+    // --- 3D MODEL 1: PENANGKAP AIR HUJAN ---
     function buildRainCollector() {
       rainCollectorGroup = new THREE.Group();
 
-      // Base Stand (Struktur Meja/Kerangka Kaki Metal Terang)
-      const frameMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4, metalness: 0.7 }); // Silver terang
-      const woodMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 }); // Kayu hangat
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4, metalness: 0.7 });
 
-      // Frame Legs & Base
       const legGeo = new THREE.BoxGeometry(0.2, 3, 0.2);
-      
       const leg1 = new THREE.Mesh(legGeo, frameMat); leg1.position.set(-2, 1.5, -2);
       const leg2 = new THREE.Mesh(legGeo, frameMat); leg2.position.set(2, 1.5, -2);
       const leg3 = new THREE.Mesh(legGeo, frameMat); leg3.position.set(-2, 2.5, 2); leg3.scale.set(1, 1.66, 1);
       const leg4 = new THREE.Mesh(legGeo, frameMat); leg4.position.set(2, 2.5, 2); leg4.scale.set(1, 1.66, 1);
-
       rainCollectorGroup.add(leg1, leg2, leg3, leg4);
 
-      // Wadah Utama / Frame Penangkap Hujan (Warna Terang & Bersih)
       const containerFrameGeo = new THREE.BoxGeometry(4.4, 0.3, 4.4);
-      const containerFrameMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2, metalness: 0.8 }); // Putih Murni Metallic
+      const containerFrameMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2, metalness: 0.8 });
       const containerFrame = new THREE.Mesh(containerFrameGeo, containerFrameMat);
       
-      // Permukaan Wadah Penangkap (Tampak Terang & Menangkap Air)
       const surfaceGeo = new THREE.PlaneGeometry(4.2, 4.2);
       const surfaceMat = new THREE.MeshStandardMaterial({ 
-        color: 0x38bdf8, // Biru Terang (Cyan Sky)
+        color: 0x38bdf8,
         roughness: 0.1, 
         metalness: 0.1,
         transparent: true,
@@ -340,7 +332,6 @@
       const basinGroup = new THREE.Group();
       basinGroup.add(containerFrame, surface);
 
-      // Kemiringan Wadah sesuai Vektor Normal N(3, 0, 4)
       const normalVec = new THREE.Vector3(3, 0, 4).normalize();
       const defaultNormal = new THREE.Vector3(0, 1, 0);
       const quat = new THREE.Quaternion().setFromUnitVectors(defaultNormal, normalVec);
@@ -349,67 +340,117 @@
 
       rainCollectorGroup.add(basinGroup);
 
-      // Awan Hujan (Cloud)
+      // Cloud
       cloudGroup = new THREE.Group();
       const cloudMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.9 });
-      
       for(let i=0; i<6; i++) {
         const sphereGeo = new THREE.SphereGeometry(0.8 + Math.random()*0.5, 16, 16);
         const cloudPart = new THREE.Mesh(sphereGeo, cloudMat);
         cloudPart.position.set((i-2.5)*0.8, Math.random()*0.3, Math.random()*0.5);
         cloudGroup.add(cloudPart);
       }
-      cloudGroup.position.set(4, 8, 8); // Di sekitarnya arah datang air hujan H(4,3,12)
+      cloudGroup.position.set(4, 8, 8);
       rainCollectorGroup.add(cloudGroup);
+
+      // Rain Drops
+      const particleCount = 120;
+      const rainGeo = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+      for(let i=0; i<particleCount; i++) {
+        positions[i*3] = (Math.random() - 0.5) * 6;
+        positions[i*3+1] = Math.random() * 8;
+        positions[i*3+2] = (Math.random() - 0.5) * 6;
+      }
+      rainGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const rainMat = new THREE.PointsMaterial({ color: 0x38bdf8, size: 0.15, transparent: true, opacity: 0.8 });
+      rainParticlesGroup = new THREE.Points(rainGeo, rainMat);
+      rainParticlesGroup.position.set(0, 3, 0);
+      rainCollectorGroup.add(rainParticlesGroup);
 
       scene.add(rainCollectorGroup);
     }
 
-    // --- 3D MODEL: ROBOT ARM ---
-    function buildRobotArm() {
-      robotArmGroup = new THREE.Group();
+    // --- 3D MODEL 2: BOOM DEREK (CRANE BOOM + ANIMATED CABLE) ---
+    function buildCraneBoom() {
+      craneGroup = new THREE.Group();
 
-      const baseMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.3 });
-      const armMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.5, roughness: 0.4 }); // Yellow industrial
-      const jointMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.9, roughness: 0.2 });
+      const ironMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4, metalness: 0.6 }); // Industrial Orange
+      const steelMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.3, metalness: 0.8 });
 
-      // Base
-      const baseGeo = new THREE.CylinderGeometry(1.5, 1.8, 0.6, 32);
-      const base = new THREE.Mesh(baseGeo, baseMat);
-      base.position.y = 0.3;
-      robotArmGroup.add(base);
+      // Base Support / Poros Boom Pivot
+      const baseFrameGeo = new THREE.BoxGeometry(1.2, 1.2, 1.2);
+      const baseFrame = new THREE.Mesh(baseFrameGeo, steelMat);
+      baseFrame.position.set(0, 0.6, 0);
+      craneGroup.add(baseFrame);
 
-      // Pivot Joint
-      const pivotGeo = new THREE.SphereGeometry(0.7, 32, 32);
-      const pivot = new THREE.Mesh(pivotGeo, jointMat);
-      pivot.position.set(0, 0.8, 0);
-      robotArmGroup.add(pivot);
+      const pivotCylinderGeo = new THREE.CylinderGeometry(0.3, 0.3, 1.6, 16);
+      pivotCylinderGeo.rotateX(Math.PI / 2);
+      const pivotCylinder = new THREE.Mesh(pivotCylinderGeo, steelMat);
+      pivotCylinder.position.set(0, 0.6, 0);
+      craneGroup.add(pivotCylinder);
 
-      // Arm Link
-      const armLinkGroup = new THREE.Group();
-      const linkGeo = new THREE.CylinderGeometry(0.25, 0.25, 5, 16);
-      linkGeo.translate(0, 2.5, 0);
-      const link = new THREE.Mesh(linkGeo, armMat);
-      armLinkGroup.add(link);
+      // Boom Structure Group (Rotates with vector r)
+      const boomStructure = new THREE.Group();
+      boomStructure.name = "boomStructure";
 
-      // End Effector / Gripper
-      const gripperGeo = new THREE.BoxGeometry(0.6, 0.6, 0.8);
-      const gripper = new THREE.Mesh(gripperGeo, baseMat);
-      gripper.position.set(0, 5, 0);
-      armLinkGroup.add(gripper);
+      // Boom Lattice Arm Body
+      const boomBodyGeo = new THREE.CylinderGeometry(0.25, 0.35, 5, 16);
+      boomBodyGeo.translate(0, 2.5, 0);
+      const boomBody = new THREE.Mesh(boomBodyGeo, ironMat);
+      boomStructure.add(boomBody);
 
-      armLinkGroup.position.set(0, 0.8, 0);
-      armLinkGroup.name = "armLinkGroup";
+      // Pulley Wheel at Tip of Boom
+      const pulleyGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 32);
+      pulleyGeo.rotateZ(Math.PI / 2);
+      const pulley = new THREE.Mesh(pulleyGeo, steelMat);
+      pulley.position.set(0, 5, 0);
+      boomStructure.add(pulley);
 
-      robotArmGroup.add(armLinkGroup);
-      scene.add(robotArmGroup);
+      boomStructure.position.set(0, 0.6, 0);
+      craneGroup.add(boomStructure);
+
+      // Cable with Animated Stripes/Flow Effect
+      cableTexture = createCableTexture();
+      cableTexture.wrapS = THREE.RepeatWrapping;
+      cableTexture.wrapT = THREE.RepeatWrapping;
+      cableTexture.repeat.set(1, 10);
+
+      const cableMat = new THREE.MeshStandardMaterial({
+        map: cableTexture,
+        roughness: 0.3,
+        metalness: 0.7
+      });
+
+      const cableGeo = new THREE.CylinderGeometry(0.06, 0.06, 1, 16);
+      cableGeo.translate(0, 0.5, 0);
+      cableMesh = new THREE.Mesh(cableGeo, cableMat);
+      craneGroup.add(cableMesh);
+
+      scene.add(craneGroup);
+    }
+
+    // Helper: Create striped texture for cable motion
+    function createCableTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#1e293b'; // Charcoal Dark
+      ctx.fillRect(0, 0, 64, 64);
+
+      ctx.fillStyle = '#fbbf24'; // Yellow Stripe Animation
+      ctx.fillRect(0, 0, 64, 20);
+      ctx.fillRect(0, 32, 64, 16);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      return texture;
     }
 
     function loadPreset(mode) {
       currentMode = mode;
 
-      // Button styling reset
-      ['btn-rain', 'btn-robot', 'btn-custom'].forEach(id => {
+      ['btn-rain', 'btn-crane', 'btn-custom'].forEach(id => {
         const btn = document.getElementById(id);
         btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 transition-all";
       });
@@ -424,40 +465,51 @@
         
         document.getElementById('vec-a-name').innerText = "Vektor Normal N (3, 0, 4)";
         document.getElementById('vec-b-name').innerText = "Vektor Air H (4, 3, 12)";
+        document.getElementById('label-mag-a').innerText = "Magnitudo |N|:";
+        document.getElementById('label-mag-b').innerText = "Magnitudo |H|:";
         document.getElementById('operation-tag').innerText = "Dot Product";
         document.getElementById('eff-label').innerText = "Keefektifan cos(θ)";
 
+        // Sliders range reset for rain
+        setSliderRanges(10, 15);
+
         rainCollectorGroup.visible = true;
-        robotArmGroup.visible = false;
+        craneGroup.visible = false;
 
         controls.target.set(0, 3, 0);
         camera.position.set(12, 10, 16);
 
-      } else if (mode === 'robot') {
-        document.getElementById('btn-robot').className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow";
+      } else if (mode === 'crane') {
+        document.getElementById('btn-crane').className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow";
         
-        vecA.set(3, 0, 4); // Position r
-        vecB.set(5, 0, 0); // Force F
+        vecA.set(4, 3, 0);       // r = (4, 3, 0)
+        vecB.set(250, -700, -400); // F = (250, -700, -400)
         
-        document.getElementById('vec-a-name').innerText = "Vektor Posisi r (3, 0, 4)";
-        document.getElementById('vec-b-name').innerText = "Vektor Gaya F (5, 0, 0)";
+        document.getElementById('vec-a-name').innerText = "Vektor Lengan r (4, 3, 0) m";
+        document.getElementById('vec-b-name').innerText = "Vektor Gaya F (250, -700, -400) N";
+        document.getElementById('label-mag-a').innerText = "Panjang Boom |r|:";
+        document.getElementById('label-mag-b').innerText = "Besar Gaya |F|:";
         document.getElementById('operation-tag').innerText = "Cross Product";
         document.getElementById('eff-label').innerText = "Efisiensi Torsi sin(θ)";
         document.getElementById('cross-vector-display').classList.remove('hidden');
 
-        rainCollectorGroup.visible = false;
-        robotArmGroup.visible = true;
+        // Sliders range adjust for Crane forces
+        setSliderRanges(10, 1000);
 
-        controls.target.set(1.5, 2.5, 2);
-        camera.position.set(10, 8, 12);
+        rainCollectorGroup.visible = false;
+        craneGroup.visible = true;
+
+        controls.target.set(2, 2, 0);
+        camera.position.set(12, 8, 14);
 
       } else {
         document.getElementById('btn-custom').className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow";
         document.getElementById('vec-a-name').innerText = "Vektor A";
         document.getElementById('vec-b-name').innerText = "Vektor B";
         
+        setSliderRanges(10, 20);
         rainCollectorGroup.visible = false;
-        robotArmGroup.visible = false;
+        craneGroup.visible = false;
       }
 
       // Sync Sliders & Update
@@ -472,6 +524,17 @@
       updateCalculations();
     }
 
+    function setSliderRanges(maxA, maxB) {
+      ['ax','ay','az'].forEach(id => {
+        const elem = document.getElementById(id);
+        elem.min = -maxA; elem.max = maxA; elem.step = 1;
+      });
+      ['bx','by','bz'].forEach(id => {
+        const elem = document.getElementById(id);
+        elem.min = -maxB; elem.max = maxB; elem.step = (maxB > 50) ? 10 : 1;
+      });
+    }
+
     function updateFromSliders() {
       vecA.x = parseFloat(document.getElementById('ax').value);
       vecA.y = parseFloat(document.getElementById('ay').value);
@@ -484,9 +547,9 @@
       if (currentMode === 'rain') {
         document.getElementById('vec-a-name').innerText = `Vektor Normal N (${vecA.x}, ${vecA.y}, ${vecA.z})`;
         document.getElementById('vec-b-name').innerText = `Vektor Air H (${vecB.x}, ${vecB.y}, ${vecB.z})`;
-      } else if (currentMode === 'robot') {
-        document.getElementById('vec-a-name').innerText = `Vektor Posisi r (${vecA.x}, ${vecA.y}, ${vecA.z})`;
-        document.getElementById('vec-b-name').innerText = `Vektor Gaya F (${vecB.x}, ${vecB.y}, ${vecB.z})`;
+      } else if (currentMode === 'crane') {
+        document.getElementById('vec-a-name').innerText = `Vektor Lengan r (${vecA.x}, ${vecA.y}, ${vecA.z}) m`;
+        document.getElementById('vec-b-name').innerText = `Vektor Gaya F (${vecB.x}, ${vecB.y}, ${vecB.z}) N`;
       }
 
       updateCalculations();
@@ -501,8 +564,8 @@
       const magCross = cross.length();
 
       // Math updates
-      document.getElementById('mag-a').innerText = magA.toFixed(2);
-      document.getElementById('mag-b').innerText = magB.toFixed(2);
+      document.getElementById('mag-a').innerText = (currentMode === 'crane') ? `${magA.toFixed(2)} m` : magA.toFixed(2);
+      document.getElementById('mag-b').innerText = (currentMode === 'crane') ? `${magB.toFixed(2)} N` : magB.toFixed(2);
 
       let angleRad = 0;
       if (magA > 0 && magB > 0) {
@@ -512,37 +575,58 @@
       const angleDeg = angleRad * (180 / Math.PI);
       document.getElementById('angle-val').innerText = `${angleDeg.toFixed(2)}°`;
 
-      const origin = (currentMode === 'rain') ? new THREE.Vector3(0, 3, 0) : new THREE.Vector3(0, 0.8, 0);
-
-      if (currentMode === 'robot') {
-        // Cross Product mode
+      if (currentMode === 'crane') {
+        // Cross Product mode: Boom Derek
         document.getElementById('product-label').innerText = "Besar Torsi |r × F|:";
-        document.getElementById('product-val').innerText = `${magCross.toFixed(2)} N·m`;
-        document.getElementById('cross-vector-display').innerText = `Vektor Torsi τ = (${cross.x.toFixed(1)}, ${cross.y.toFixed(1)}, ${cross.z.toFixed(1)})`;
+        document.getElementById('product-val').innerText = `${magCross.toFixed(1)} N·m`;
+        document.getElementById('cross-vector-display').innerText = `Vektor Torsi τ = (${cross.x.toFixed(0)}, ${cross.y.toFixed(0)}, ${cross.z.toFixed(0)}) N·m`;
 
         const sinTheta = Math.sin(angleRad);
         const effPercent = (sinTheta * 100).toFixed(2);
         document.getElementById('eff-val').innerText = `${effPercent}%`;
 
-        // Render Vectors
-        updateArrow(arrowA, origin, vecA);
-        updateArrow(arrowB, origin.clone().add(vecA), vecB); // Gaya diterapkan di ujung lengan r
-        updateArrow(arrowResult, origin, cross); // Vektor Torsi
+        const originPivot = new THREE.Vector3(0, 0.6, 0);
 
-        // Align Robot Arm Mesh to Vector r
-        if (robotArmGroup) {
-          const armLinkGroup = robotArmGroup.getObjectByName("armLinkGroup");
-          if (armLinkGroup && magA > 0) {
+        // Scales down force and torque vector length visual representation for clear display
+        const forceScale = 0.005; // 850 N ~ 4.25 units
+        const torqueScale = 0.001; // 4000 N.m ~ 4 units
+
+        updateArrow(arrowA, originPivot, vecA);
+        
+        const tipPos = originPivot.clone().add(vecA);
+        updateArrow(arrowB, tipPos, vecB, forceScale); // Cable Force Arrow starting from boom tip
+        updateArrow(arrowResult, originPivot, cross, torqueScale); // Torque Arrow
+
+        // Update Boom Derek structure orientation
+        if (craneGroup) {
+          const boomStructure = craneGroup.getObjectByName("boomStructure");
+          if (boomStructure && magA > 0) {
             const unitA = vecA.clone().normalize();
             const up = new THREE.Vector3(0, 1, 0);
             const q = new THREE.Quaternion().setFromUnitVectors(up, unitA);
-            armLinkGroup.quaternion.copy(q);
-            armLinkGroup.scale.set(1, magA / 5.0, 1);
+            boomStructure.quaternion.copy(q);
+            boomStructure.scale.set(1, magA / 5.0, 1);
           }
         }
 
+        // Update Cable Mesh alignment to Force Vector F
+        if (cableMesh && magB > 0) {
+          const tipPos = originPivot.clone().add(vecA);
+          cableMesh.position.copy(tipPos);
+
+          const forceDisp = vecB.clone().multiplyScalar(forceScale);
+          const cableLen = forceDisp.length();
+
+          cableMesh.scale.set(1, cableLen, 1);
+
+          const unitF = forceDisp.clone().normalize();
+          const up = new THREE.Vector3(0, 1, 0);
+          const q = new THREE.Quaternion().setFromUnitVectors(up, unitF);
+          cableMesh.quaternion.copy(q);
+        }
+
       } else {
-        // Dot Product mode
+        // Dot Product mode: Rain
         document.getElementById('product-label').innerText = "Dot Product (N · H):";
         document.getElementById('product-val').innerText = dot.toFixed(2);
 
@@ -550,11 +634,11 @@
         const effPercent = (Math.max(0, cosTheta) * 100).toFixed(2);
         document.getElementById('eff-val').innerText = `${effPercent}%`;
 
-        updateArrow(arrowA, origin, vecA);
-        updateArrow(arrowB, origin, vecB);
+        const originRain = new THREE.Vector3(0, 3, 0);
+        updateArrow(arrowA, originRain, vecA);
+        updateArrow(arrowB, originRain, vecB);
         arrowResult.visible = false;
 
-        // Orient Rain Collector to Normal vector N
         if (rainCollectorGroup && magA > 0) {
           const basinGroup = rainCollectorGroup.children[4];
           if (basinGroup) {
@@ -576,7 +660,6 @@
       const themeText = document.getElementById('theme-text');
 
       if (isDarkTheme) {
-        // Switch to Dark
         body.className = "theme-dark select-none";
         scene.background.setHex(0x0f172a);
         scene.fog.color.setHex(0x0f172a);
@@ -589,7 +672,6 @@
         themeIcon.className = "fa-solid fa-sun";
         themeText.innerText = "Terang";
       } else {
-        // Switch to Light
         body.className = "theme-light select-none";
         scene.background.setHex(0xf1f5f9);
         scene.fog.color.setHex(0xf1f5f9);
@@ -614,9 +696,29 @@
       requestAnimationFrame(animate);
       controls.update();
 
-      // Soft rain cloud bobbing effect
-      if (cloudGroup && currentMode === 'rain') {
-        cloudGroup.position.y = 8 + Math.sin(Date.now() * 0.002) * 0.2;
+      // Rain drop animation along vector H
+      if (rainParticlesGroup && currentMode === 'rain') {
+        const positions = rainParticlesGroup.geometry.attributes.position.array;
+        const dirH = vecB.clone().normalize();
+        
+        for (let i = 0; i < positions.length; i += 3) {
+          positions[i] -= dirH.x * 0.12;
+          positions[i+1] -= dirH.y * 0.12;
+          positions[i+2] -= dirH.z * 0.12;
+
+          // Loop back up when reaching bottom
+          if (positions[i+1] < -3) {
+            positions[i] = (Math.random() - 0.5) * 6;
+            positions[i+1] = 6 + Math.random() * 3;
+            positions[i+2] = (Math.random() - 0.5) * 6;
+          }
+        }
+        rainParticlesGroup.geometry.attributes.position.needsUpdate = true;
+      }
+
+      // Cable Tension Flow Animation
+      if (cableTexture && currentMode === 'crane') {
+        cableTexture.offset.y -= 0.02; // Animated movement of cable texture
       }
 
       renderer.render(scene, camera);
