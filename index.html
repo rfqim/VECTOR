@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vektor Dot & Cross Product</title>
+  <title>Visualisasi 3D Interaktif: Vektor Dot & Cross Product</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -41,7 +41,7 @@
         <h1 class="text-xl font-bold flex items-center gap-2">
           <i class="fa-solid font-mono text-cyan-400">📊</i> Visualisasi Vektor 3D
         </h1>
-        <p class="text-xs opacity-70 mt-1">Koordinat: X (Kanan-Kiri), Y (Depan-Belakang), Z (Atas-Bawah)</p>
+        <p class="text-xs opacity-70 mt-1">Sumbu: X (Kanan-Kiri), Y (Depan-Belakang), Z (Atas-Bawah)</p>
       </div>
 
       <!-- Presets & Theme Toggle -->
@@ -171,13 +171,11 @@
     let cableMesh, cableTexture;
     let isDarkTheme = true;
 
-    // Standard Math Vector States: (X: Kanan/Kiri, Y: Depan/Belakang, Z: Atas/Bawah)
+    // Vector States (X: Kanan-Kiri, Y: Depan-Belakang, Z: Atas-Bawah)
     let vecA = new THREE.Vector3(3, 0, 4);
     let vecB = new THREE.Vector3(4, 3, 12);
     let currentMode = 'rain'; 
 
-    // Helper: Mengubah Koordinat Matematika (X, Y, Z) ke Tampilan Three.js World (ThreeX, ThreeY, ThreeZ)
-    // Tiga.js Default: Y adalah atas/bawah, Z adalah depan/belakang
     function mathToThree(v) {
       return new THREE.Vector3(v.x, v.z, -v.y);
     }
@@ -185,16 +183,13 @@
     function init() {
       const container = document.getElementById('canvas-container');
 
-      // Scene
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0f172a);
       scene.fog = new THREE.FogExp2(0x0f172a, 0.012);
 
-      // Camera
       camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
       camera.position.set(12, 16, 10);
 
-      // Renderer
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
@@ -202,39 +197,30 @@
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
 
-      // Controls
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.target.set(0, 3, 0);
 
-      // Lighting
       setupLighting();
 
-      // Grid Helper (di bidang XY matematika -> Z=0)
       const gridHelper = new THREE.GridHelper(30, 30, 0x3b82f6, 0x334155);
       gridHelper.position.y = 0;
       scene.add(gridHelper);
 
-      // Vector Arrows setup
-      arrowA = createCustomArrow(0x10b981); // Emerald (A / r)
-      arrowB = createCustomArrow(0xf59e0b); // Amber (B / F)
-      arrowResult = createCustomArrow(0xa855f7); // Purple (Cross Product / Torque)
+      arrowA = createCustomArrow(0x10b981);
+      arrowB = createCustomArrow(0xf59e0b);
+      arrowResult = createCustomArrow(0xa855f7);
       scene.add(arrowA);
       scene.add(arrowB);
       scene.add(arrowResult);
 
-      // Build 3D Models
       buildRainCollector();
-      buildCraneBoom();
+      buildLatticeCraneBoom();
 
-      // Initial Preset Load
       loadPreset('rain');
 
-      // Event Listeners
       window.addEventListener('resize', onWindowResize);
-
-      // Animation Loop
       animate();
     }
 
@@ -288,7 +274,6 @@
       }
       arrowGroup.visible = true;
 
-      // Konversi posisi asal & vektor ke koordinat tampilan 3D
       const originThree = mathToThree(originMath);
       const dirThree = mathToThree(displayVecMath);
 
@@ -316,7 +301,7 @@
 
       const frameMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4, metalness: 0.7 });
 
-      const legGeo = new THREE.BoxGeometry(0.2, 0.2, 3); // Z adalah tinggi
+      const legGeo = new THREE.BoxGeometry(0.2, 0.2, 3);
       const leg1 = new THREE.Mesh(legGeo, frameMat); leg1.position.set(-2, -2, 1.5);
       const leg2 = new THREE.Mesh(legGeo, frameMat); leg2.position.set(2, -2, 1.5);
       const leg3 = new THREE.Mesh(legGeo, frameMat); leg3.position.set(-2, 2, 2.5); leg3.scale.set(1, 1, 1.66);
@@ -341,7 +326,6 @@
       const basinGroup = new THREE.Group();
       basinGroup.add(containerFrame, surface);
 
-      // Normal awal tegak lurus ke Z atas
       const normalVecMath = new THREE.Vector3(3, 0, 4).normalize();
       const defaultNormalMath = new THREE.Vector3(0, 0, 1);
       const quat = new THREE.Quaternion().setFromUnitVectors(defaultNormalMath, normalVecMath);
@@ -362,7 +346,7 @@
       cloudGroup.position.set(4, 3, 12);
       rainCollectorGroup.add(cloudGroup);
 
-      // Rain Drops
+      // Rain Particles
       const particleCount = 120;
       const rainGeo = new THREE.BufferGeometry();
       const positions = new Float32Array(particleCount * 3);
@@ -377,62 +361,113 @@
       rainParticlesGroup.position.set(0, 0, 3);
       rainCollectorGroup.add(rainParticlesGroup);
 
-      // Wrapper group ke visual Three.js
       const wrapperGroup = new THREE.Group();
       wrapperGroup.name = "rainCollectorWrapper";
       wrapperGroup.add(rainCollectorGroup);
-      wrapperGroup.rotation.x = -Math.PI / 2; // Transform Z-up ke Three.js Y-up
+      wrapperGroup.rotation.x = -Math.PI / 2;
       scene.add(wrapperGroup);
     }
 
-    // --- 3D MODEL 2: BOOM DEREK (CRANE BOOM) ---
-    function buildCraneBoom() {
+    // --- 3D MODEL 2: DETAILED LATTICE BOOM DEREK (CRANE BOOM) ---
+    function buildLatticeCraneBoom() {
       craneGroup = new THREE.Group();
 
       const ironMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4, metalness: 0.6 });
-      const steelMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.3, metalness: 0.8 });
+      const steelMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.3, metalness: 0.8 });
+      const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.2, metalness: 0.9 });
 
-      // Base Support
-      const baseFrameGeo = new THREE.BoxGeometry(1.2, 1.2, 1.2);
+      // Base Support Pivot Frame
+      const baseFrameGeo = new THREE.BoxGeometry(1.6, 1.6, 1.2);
       const baseFrame = new THREE.Mesh(baseFrameGeo, steelMat);
       baseFrame.position.set(0, 0, 0.6);
       craneGroup.add(baseFrame);
 
-      const pivotCylinderGeo = new THREE.CylinderGeometry(0.3, 0.3, 1.6, 16);
-      const pivotCylinder = new THREE.Mesh(pivotCylinderGeo, steelMat);
-      pivotCylinder.position.set(0, 0, 0.6);
-      craneGroup.add(pivotCylinder);
+      const pivotPinGeo = new THREE.CylinderGeometry(0.25, 0.25, 2.0, 16);
+      pivotPinGeo.rotateX(Math.PI / 2);
+      const pivotPin = new THREE.Mesh(pivotPinGeo, chromeMat);
+      pivotPin.position.set(0, 0, 0.6);
+      craneGroup.add(pivotPin);
 
-      // Boom Arm
+      // Hydraulic Piston Cylinder Support
+      const cylinderMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.8, roughness: 0.3 });
+      const hydBase = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2.2, 16), cylinderMat);
+      hydBase.rotation.x = Math.PI / 4;
+      hydBase.position.set(0, 0.8, 0.8);
+      craneGroup.add(hydBase);
+
+      const hydPiston = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 2.2, 16), chromeMat);
+      hydPiston.rotation.x = Math.PI / 4;
+      hydPiston.position.set(0, 1.4, 1.4);
+      craneGroup.add(hydPiston);
+
+      // --- LATTICE TRUSS BOOM STRUCTURE (ROD FRAMEWORK) ---
       const boomStructure = new THREE.Group();
       boomStructure.name = "boomStructure";
 
-      const boomBodyGeo = new THREE.CylinderGeometry(0.25, 0.35, 5, 16);
-      boomBodyGeo.translate(0, 2.5, 0);
-      const boomBody = new THREE.Mesh(boomBodyGeo, ironMat);
-      boomStructure.add(boomBody);
+      const boomLength = 5.0;
+      const w = 0.5; // Boom width
+      const mainRodRadius = 0.05;
+      const mainRodGeo = new THREE.CylinderGeometry(mainRodRadius, mainRodRadius, boomLength, 12);
+      mainRodGeo.translate(0, boomLength / 2, 0);
 
-      const pulleyGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 32);
+      // 4 Main Chords (Corner Pillars)
+      const cornerOffsets = [
+        [-w/2, -w/2], [w/2, -w/2], [-w/2, w/2], [w/2, w/2]
+      ];
+
+      cornerOffsets.forEach(([cx, cz]) => {
+        const chord = new THREE.Mesh(mainRodGeo, ironMat);
+        chord.position.set(cx, 0, cz);
+        boomStructure.add(chord);
+      });
+
+      // Diagonal & Horizontal Bracing Lattice Members
+      const crossRodRadius = 0.025;
+      const numSections = 6;
+      const sectionHeight = boomLength / numSections;
+
+      for (let i = 0; i < numSections; i++) {
+        const y1 = i * sectionHeight;
+        const y2 = (i + 1) * sectionHeight;
+
+        const faces = [
+          [[-w/2, y1, -w/2], [w/2, y1, -w/2], [-w/2, y2, -w/2], [w/2, y2, -w/2]], // Front
+          [[-w/2, y1, w/2], [w/2, y1, w/2], [-w/2, y2, w/2], [w/2, y2, w/2]],     // Back
+          [[-w/2, y1, -w/2], [-w/2, y1, w/2], [-w/2, y2, -w/2], [-w/2, y2, w/2]], // Left
+          [[w/2, y1, -w/2], [w/2, y1, w/2], [w/2, y2, -w/2], [w/2, y2, w/2]]      // Right
+        ];
+
+        faces.forEach(face => {
+          addStrut(boomStructure, face[0], face[1], crossRodRadius, ironMat); // Horizontal bottom
+          addStrut(boomStructure, face[0], face[3], crossRodRadius, ironMat); // Diagonal X
+          addStrut(boomStructure, face[1], face[2], crossRodRadius, ironMat); // Diagonal X reverse
+        });
+      }
+
+      // Pulley Head & Sheaves at Tip
+      const headExtensionMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8 });
+      const headBox = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.8, 0.7), headExtensionMat);
+      headBox.position.set(0, boomLength, 0);
+      boomStructure.add(headBox);
+
+      const pulleyGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.15, 32);
       pulleyGeo.rotateZ(Math.PI / 2);
-      const pulley = new THREE.Mesh(pulleyGeo, steelMat);
-      pulley.position.set(0, 5, 0);
-      boomStructure.add(pulley);
+      const pulley1 = new THREE.Mesh(pulleyGeo, chromeMat);
+      pulley1.position.set(-0.15, boomLength + 0.3, 0);
+      const pulley2 = new THREE.Mesh(pulleyGeo, chromeMat);
+      pulley2.position.set(0.15, boomLength + 0.3, 0);
+      boomStructure.add(pulley1, pulley2);
 
       boomStructure.position.set(0, 0, 0.6);
       craneGroup.add(boomStructure);
 
-      // Cable Mesh
+      // Cable Mesh with animated Texture
       cableTexture = createCableTexture();
       cableTexture.wrapS = THREE.RepeatWrapping;
       cableTexture.wrapT = THREE.RepeatWrapping;
       cableTexture.repeat.set(1, 10);
 
-      const cableMat = new THREE.MeshStandardMaterial({
-        map: cableTexture,
-        roughness: 0.3,
-        metalness: 0.7
-      });
-
+      const cableMat = new THREE.MeshStandardMaterial({ map: cableTexture, roughness: 0.3, metalness: 0.7 });
       const cableGeo = new THREE.CylinderGeometry(0.06, 0.06, 1, 16);
       cableGeo.translate(0, 0.5, 0);
       cableMesh = new THREE.Mesh(cableGeo, cableMat);
@@ -441,8 +476,26 @@
       const wrapperGroup = new THREE.Group();
       wrapperGroup.name = "craneWrapper";
       wrapperGroup.add(craneGroup);
-      wrapperGroup.rotation.x = -Math.PI / 2; // Transform Z-up ke Three.js Y-up
+      wrapperGroup.rotation.x = -Math.PI / 2;
       scene.add(wrapperGroup);
+    }
+
+    // Helper: Construct rod connection between two points
+    function addStrut(parentGroup, p1, p2, radius, material) {
+      const v1 = new THREE.Vector3(...p1);
+      const v2 = new THREE.Vector3(...p2);
+      const distance = v1.distanceTo(v2);
+
+      const strutGeo = new THREE.CylinderGeometry(radius, radius, distance, 8);
+      strutGeo.translate(0, distance / 2, 0);
+      const strut = new THREE.Mesh(strutGeo, material);
+
+      strut.position.copy(v1);
+      const dir = v2.clone().sub(v1).normalize();
+      const up = new THREE.Vector3(0, 1, 0);
+      strut.quaternion.setFromUnitVectors(up, dir);
+
+      parentGroup.add(strut);
     }
 
     function createCableTexture() {
@@ -469,8 +522,8 @@
       if (mode === 'rain') {
         document.getElementById('btn-rain').className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow";
         
-        vecA.set(3, 0, 4);       // N = 3i + 0j + 4k
-        vecB.set(4, 3, 12);      // H = 4i + 3j + 12k
+        vecA.set(3, 0, 4);       
+        vecB.set(4, 3, 12);      
         
         document.getElementById('vec-a-name').innerText = "Vektor Normal N (3, 0, 4)";
         document.getElementById('vec-b-name').innerText = "Vektor Air H (4, 3, 12)";
@@ -490,8 +543,8 @@
       } else if (mode === 'crane') {
         document.getElementById('btn-crane').className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow";
         
-        vecA.set(4, 3, 0);         // r = 4i + 3j + 0k (m)
-        vecB.set(250, -700, -400); // F = 250i - 700j - 400k (N)
+        vecA.set(4, 3, 0);         
+        vecB.set(250, -700, -400); 
         
         document.getElementById('vec-a-name').innerText = "Vektor Lengan r (4, 3, 0) m";
         document.getElementById('vec-b-name').innerText = "Vektor Gaya F (250, -700, -400) N";
@@ -519,7 +572,6 @@
         if (craneWrapper) craneWrapper.visible = false;
       }
 
-      // Sync Sliders
       document.getElementById('ax').value = vecA.x;
       document.getElementById('ay').value = vecA.y;
       document.getElementById('az').value = vecA.z;
@@ -567,11 +619,9 @@
       const magB = vecB.length();
       const dot = vecA.dot(vecB);
       
-      // Cross Product Matematika Standar (r x F)
       const cross = new THREE.Vector3().crossVectors(vecA, vecB);
       const magCross = cross.length();
 
-      // UI Math Update
       document.getElementById('mag-a').innerText = (currentMode === 'crane') ? `${magA.toFixed(2)} m` : magA.toFixed(2);
       document.getElementById('mag-b').innerText = (currentMode === 'crane') ? `${magB.toFixed(2)} N` : magB.toFixed(2);
 
@@ -603,7 +653,6 @@
         updateArrow(arrowB, tipPosMath, vecB, forceScale);
         updateArrow(arrowResult, originPivotMath, cross, torqueScale);
 
-        // Transformasi Mesh Derek
         if (craneGroup) {
           const boomStructure = craneGroup.getObjectByName("boomStructure");
           if (boomStructure && magA > 0) {
@@ -615,7 +664,6 @@
           }
         }
 
-        // Transformasi Kabel Ketegangan
         if (cableMesh && magB > 0) {
           const tipPosThree = mathToThree(tipPosMath);
           cableMesh.position.copy(tipPosThree);
@@ -700,7 +748,6 @@
       requestAnimationFrame(animate);
       controls.update();
 
-      // Animasi air hujan jatuh mengikuti vektor air H
       if (rainParticlesGroup && currentMode === 'rain') {
         const positions = rainParticlesGroup.geometry.attributes.position.array;
         const dirHMath = vecB.clone().normalize();
@@ -719,7 +766,6 @@
         rainParticlesGroup.geometry.attributes.position.needsUpdate = true;
       }
 
-      // Animasi tekstur garis tali ketegangan
       if (cableTexture && currentMode === 'crane') {
         cableTexture.offset.y -= 0.02;
       }
