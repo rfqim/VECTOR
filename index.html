@@ -41,7 +41,7 @@
         <h1 class="text-xl font-bold flex items-center gap-2">
           <i class="fa-solid font-mono text-cyan-400">📊</i> Visualisasi Vektor 3D
         </h1>
-        <p class="text-xs opacity-70 mt-1">Sumbu: X (Kanan-Kiri), Y (Depan-Belakang), Z (Atas-Bawah)</p>
+        <p class="text-xs opacity-70 mt-1">Koordinat: X (Kanan-Kiri), Y (Depan-Belakang), Z (Atas-Bawah)</p>
       </div>
 
       <!-- Presets & Theme Toggle -->
@@ -49,8 +49,8 @@
         <button id="btn-rain" onclick="loadPreset('rain')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow">
           🌧️ Penangkap Air Hujan (Dot Product)
         </button>
-        <button id="btn-crane" onclick="loadPreset('crane')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 transition-all">
-          🏗️ Boom Derek (Cross Product)
+        <button id="btn-excavator" onclick="loadPreset('excavator')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 transition-all">
+          🚜 Ekskavator (Cross Product)
         </button>
         <button id="btn-custom" onclick="loadPreset('custom')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 transition-all">
           ⚙️ Mode Bebas
@@ -116,7 +116,7 @@
         <!-- Vector A Sliders -->
         <div class="mb-3">
           <div class="text-xs font-semibold text-emerald-400 mb-1 flex items-center justify-between">
-            <span id="vec-a-name">Vektor A</span>
+            <span id="vec-a-name">Vektor A (Boom r)</span>
           </div>
           <div class="grid grid-cols-3 gap-2 text-[10px]">
             <div>
@@ -137,20 +137,20 @@
         <!-- Vector B Sliders -->
         <div>
           <div class="text-xs font-semibold text-amber-400 mb-1 flex items-center justify-between">
-            <span id="vec-b-name">Vektor B</span>
+            <span id="vec-b-name">Vektor B (Arm & Bucket F)</span>
           </div>
           <div class="grid grid-cols-3 gap-2 text-[10px]">
             <div>
               <label class="block opacity-60">X (Kanan/Kiri)</label>
-              <input type="range" id="bx" min="-1000" max="1000" value="4" step="10" oninput="updateFromSliders()" class="w-full accent-amber-500">
+              <input type="range" id="bx" min="-10" max="10" value="4" step="1" oninput="updateFromSliders()" class="w-full accent-amber-500">
             </div>
             <div>
               <label class="block opacity-60">Y (Depan/Blk)</label>
-              <input type="range" id="by" min="-1000" max="1000" value="3" step="10" oninput="updateFromSliders()" class="w-full accent-amber-500">
+              <input type="range" id="by" min="-10" max="10" value="3" step="1" oninput="updateFromSliders()" class="w-full accent-amber-500">
             </div>
             <div>
               <label class="block opacity-60">Z (Atas/Bwh)</label>
-              <input type="range" id="bz" min="-1000" max="1000" value="12" step="10" oninput="updateFromSliders()" class="w-full accent-amber-500">
+              <input type="range" id="bz" min="-10" max="10" value="-4" step="1" oninput="updateFromSliders()" class="w-full accent-amber-500">
             </div>
           </div>
         </div>
@@ -167,13 +167,14 @@
   <script>
     let scene, camera, renderer, controls;
     let arrowA, arrowB, arrowResult;
-    let rainCollectorGroup, craneGroup, cloudGroup, rainParticlesGroup;
-    let cableMesh, cableTexture;
+    let rainCollectorGroup, excavatorGroup, cloudGroup, rainParticlesGroup;
+    let boomGroup, armGroup, bucketGroup;
+    let boomCylinderMesh, stickCylinderMesh, bucketCylinderMesh;
     let isDarkTheme = true;
 
-    // Vector States (X: Kanan-Kiri, Y: Depan-Belakang, Z: Atas-Bawah)
+    // Standard Math Vector States: (X: Kanan/Kiri, Y: Depan/Belakang, Z: Atas/Bawah)
     let vecA = new THREE.Vector3(3, 0, 4);
-    let vecB = new THREE.Vector3(4, 3, 12);
+    let vecB = new THREE.Vector3(1, 0, -3);
     let currentMode = 'rain'; 
 
     function mathToThree(v) {
@@ -183,13 +184,16 @@
     function init() {
       const container = document.getElementById('canvas-container');
 
+      // Scene
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0f172a);
       scene.fog = new THREE.FogExp2(0x0f172a, 0.012);
 
+      // Camera
       camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(12, 16, 10);
+      camera.position.set(14, 14, 12);
 
+      // Renderer
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
@@ -197,30 +201,39 @@
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
 
+      // Controls
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.target.set(0, 3, 0);
 
+      // Lighting
       setupLighting();
 
+      // Grid Helper
       const gridHelper = new THREE.GridHelper(30, 30, 0x3b82f6, 0x334155);
       gridHelper.position.y = 0;
       scene.add(gridHelper);
 
-      arrowA = createCustomArrow(0x10b981);
-      arrowB = createCustomArrow(0xf59e0b);
-      arrowResult = createCustomArrow(0xa855f7);
+      // Vector Arrows setup
+      arrowA = createCustomArrow(0x10b981); // Emerald (Vektor A / r - Boom)
+      arrowB = createCustomArrow(0xf59e0b); // Amber (Vektor B / F - Gaya Bucket)
+      arrowResult = createCustomArrow(0xa855f7); // Purple (Cross Product / Torsi)
       scene.add(arrowA);
       scene.add(arrowB);
       scene.add(arrowResult);
 
+      // Build 3D Models
       buildRainCollector();
-      buildLatticeCraneBoom();
+      buildExcavatorModel();
 
+      // Initial Preset Load
       loadPreset('rain');
 
+      // Event Listeners
       window.addEventListener('resize', onWindowResize);
+
+      // Animation Loop
       animate();
     }
 
@@ -346,7 +359,7 @@
       cloudGroup.position.set(4, 3, 12);
       rainCollectorGroup.add(cloudGroup);
 
-      // Rain Particles
+      // Rain Drops
       const particleCount = 120;
       const rainGeo = new THREE.BufferGeometry();
       const positions = new Float32Array(particleCount * 3);
@@ -368,162 +381,147 @@
       scene.add(wrapperGroup);
     }
 
-    // --- 3D MODEL 2: DETAILED LATTICE BOOM DEREK (CRANE BOOM) ---
-    function buildLatticeCraneBoom() {
-      craneGroup = new THREE.Group();
+    // --- 3D MODEL 2: EKSKAVATOR LENGKAP ---
+    function buildExcavatorModel() {
+      excavatorGroup = new THREE.Group();
 
-      const ironMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4, metalness: 0.6 });
-      const steelMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.3, metalness: 0.8 });
-      const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.2, metalness: 0.9 });
+      const yellowMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.3, metalness: 0.5 });
+      const darkSteelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6, metalness: 0.8 });
+      const chromeMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.1, metalness: 0.95 });
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, transparent: true, opacity: 0.5 });
 
-      // Base Support Pivot Frame
-      const baseFrameGeo = new THREE.BoxGeometry(1.6, 1.6, 1.2);
-      const baseFrame = new THREE.Mesh(baseFrameGeo, steelMat);
-      baseFrame.position.set(0, 0, 0.6);
-      craneGroup.add(baseFrame);
+      // 1. PROPEL SYSTEM (Roda Rantai Chassis)
+      const propelGroup = new THREE.Group();
+      const trackLeftGeo = new THREE.BoxGeometry(0.6, 4.4, 0.8);
+      const trackRightGeo = new THREE.BoxGeometry(0.6, 4.4, 0.8);
+      const trackLeft = new THREE.Mesh(trackLeftGeo, darkSteelMat); trackLeft.position.set(-1.4, -0.6, 0.4);
+      const trackRight = new THREE.Mesh(trackRightGeo, darkSteelMat); trackRight.position.set(1.4, -0.6, 0.4);
 
-      const pivotPinGeo = new THREE.CylinderGeometry(0.25, 0.25, 2.0, 16);
-      pivotPinGeo.rotateX(Math.PI / 2);
-      const pivotPin = new THREE.Mesh(pivotPinGeo, chromeMat);
-      pivotPin.position.set(0, 0, 0.6);
-      craneGroup.add(pivotPin);
+      const trackCenterGeo = new THREE.BoxGeometry(2.2, 2.4, 0.6);
+      const trackCenter = new THREE.Mesh(trackCenterGeo, darkSteelMat); trackCenter.position.set(0, -0.6, 0.5);
 
-      // Hydraulic Piston Cylinder Support
-      const cylinderMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.8, roughness: 0.3 });
-      const hydBase = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2.2, 16), cylinderMat);
-      hydBase.rotation.x = Math.PI / 4;
-      hydBase.position.set(0, 0.8, 0.8);
-      craneGroup.add(hydBase);
+      propelGroup.add(trackLeft, trackRight, trackCenter);
+      excavatorGroup.add(propelGroup);
 
-      const hydPiston = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 2.2, 16), chromeMat);
-      hydPiston.rotation.x = Math.PI / 4;
-      hydPiston.position.set(0, 1.4, 1.4);
-      craneGroup.add(hydPiston);
+      // 2. CABIN, DIESEL ENGINE COMPARTMENT & PUMP BODY
+      const bodyGroup = new THREE.Group();
+      const upperBaseGeo = new THREE.CylinderGeometry(1.6, 1.6, 0.3, 32);
+      const upperBase = new THREE.Mesh(upperBaseGeo, darkSteelMat);
+      upperBase.position.set(0, -0.4, 0.9);
+      bodyGroup.add(upperBase);
 
-      // --- LATTICE TRUSS BOOM STRUCTURE (ROD FRAMEWORK) ---
-      const boomStructure = new THREE.Group();
-      boomStructure.name = "boomStructure";
+      const engineHouseGeo = new THREE.BoxGeometry(2.6, 2.6, 1.4);
+      const engineHouse = new THREE.Mesh(engineHouseGeo, yellowMat);
+      engineHouse.position.set(0, -1.6, 1.7);
 
-      const boomLength = 5.0;
-      const w = 0.5; // Boom width
-      const mainRodRadius = 0.05;
-      const mainRodGeo = new THREE.CylinderGeometry(mainRodRadius, mainRodRadius, boomLength, 12);
-      mainRodGeo.translate(0, boomLength / 2, 0);
+      const exhaustGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.8, 16);
+      const exhaust = new THREE.Mesh(exhaustGeo, darkSteelMat);
+      exhaust.position.set(-0.8, -2.4, 2.8);
 
-      // 4 Main Chords (Corner Pillars)
-      const cornerOffsets = [
-        [-w/2, -w/2], [w/2, -w/2], [-w/2, w/2], [w/2, w/2]
-      ];
+      const cabinGeo = new THREE.BoxGeometry(1.2, 1.8, 1.6);
+      const cabin = new THREE.Mesh(cabinGeo, yellowMat);
+      cabin.position.set(-0.8, -0.2, 1.8);
 
-      cornerOffsets.forEach(([cx, cz]) => {
-        const chord = new THREE.Mesh(mainRodGeo, ironMat);
-        chord.position.set(cx, 0, cz);
-        boomStructure.add(chord);
-      });
+      const cabinWindowGeo = new THREE.BoxGeometry(1.0, 1.2, 1.0);
+      const cabinWindow = new THREE.Mesh(cabinWindowGeo, glassMat);
+      cabinWindow.position.set(-0.8, 0.1, 2.0);
 
-      // Diagonal & Horizontal Bracing Lattice Members
-      const crossRodRadius = 0.025;
-      const numSections = 6;
-      const sectionHeight = boomLength / numSections;
+      bodyGroup.add(engineHouse, exhaust, cabin, cabinWindow);
+      excavatorGroup.add(bodyGroup);
 
-      for (let i = 0; i < numSections; i++) {
-        const y1 = i * sectionHeight;
-        const y2 = (i + 1) * sectionHeight;
+      // 3. BOOM (Lengan Utama - Vektor r Hijau)
+      boomGroup = new THREE.Group();
+      boomGroup.name = "boomGroup";
 
-        const faces = [
-          [[-w/2, y1, -w/2], [w/2, y1, -w/2], [-w/2, y2, -w/2], [w/2, y2, -w/2]], // Front
-          [[-w/2, y1, w/2], [w/2, y1, w/2], [-w/2, y2, w/2], [w/2, y2, w/2]],     // Back
-          [[-w/2, y1, -w/2], [-w/2, y1, w/2], [-w/2, y2, -w/2], [-w/2, y2, w/2]], // Left
-          [[w/2, y1, -w/2], [w/2, y1, w/2], [w/2, y2, -w/2], [w/2, y2, w/2]]      // Right
-        ];
+      const boomLengthDefault = 5.0;
+      const boomArmGeo = new THREE.BoxGeometry(0.45, 0.5, boomLengthDefault);
+      boomArmGeo.translate(0, 0, boomLengthDefault / 2);
+      const boomArm = new THREE.Mesh(boomArmGeo, yellowMat);
+      boomGroup.add(boomArm);
+      boomGroup.position.set(0, 0, 0.6);
+      excavatorGroup.add(boomGroup);
 
-        faces.forEach(face => {
-          addStrut(boomStructure, face[0], face[1], crossRodRadius, ironMat); // Horizontal bottom
-          addStrut(boomStructure, face[0], face[3], crossRodRadius, ironMat); // Diagonal X
-          addStrut(boomStructure, face[1], face[2], crossRodRadius, ironMat); // Diagonal X reverse
-        });
+      // 4. STICK / ARM (Lengan Sekunder Sesuai Vektor Kuning B)
+      armGroup = new THREE.Group();
+      armGroup.name = "armGroup";
+      
+      const stickLengthDefault = 1.0;
+      const stickGeo = new THREE.BoxGeometry(0.4, 0.45, stickLengthDefault);
+      stickGeo.translate(0, 0, stickLengthDefault / 2);
+      const stickMesh = new THREE.Mesh(stickGeo, yellowMat);
+      armGroup.add(stickMesh);
+
+      // BUCKET (Mangkuk Pengeruk di Ujung Vektor Kuning Arm)
+      bucketGroup = new THREE.Group();
+      bucketGroup.name = "bucketGroup";
+      
+      const bucketShellGeo = new THREE.BoxGeometry(0.75, 0.8, 0.75);
+      const bucketShell = new THREE.Mesh(bucketShellGeo, darkSteelMat);
+      bucketShell.position.set(0, 0, 0.35);
+
+      for(let t = -0.28; t <= 0.28; t += 0.14) {
+        const toothGeo = new THREE.ConeGeometry(0.06, 0.35, 4);
+        const tooth = new THREE.Mesh(toothGeo, chromeMat);
+        tooth.rotation.x = -Math.PI / 3;
+        tooth.position.set(t, 0.45, 0.1);
+        bucketShell.add(tooth);
       }
+      bucketGroup.add(bucketShell);
+      armGroup.add(bucketGroup);
+      excavatorGroup.add(armGroup);
 
-      // Pulley Head & Sheaves at Tip
-      const headExtensionMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8 });
-      const headBox = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.8, 0.7), headExtensionMat);
-      headBox.position.set(0, boomLength, 0);
-      boomStructure.add(headBox);
+      // 5. HYDRAULIC CYLINDERS
+      boomCylinderMesh = createHydraulicCylinderMesh(darkSteelMat, chromeMat);
+      excavatorGroup.add(boomCylinderMesh);
 
-      const pulleyGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.15, 32);
-      pulleyGeo.rotateZ(Math.PI / 2);
-      const pulley1 = new THREE.Mesh(pulleyGeo, chromeMat);
-      pulley1.position.set(-0.15, boomLength + 0.3, 0);
-      const pulley2 = new THREE.Mesh(pulleyGeo, chromeMat);
-      pulley2.position.set(0.15, boomLength + 0.3, 0);
-      boomStructure.add(pulley1, pulley2);
+      stickCylinderMesh = createHydraulicCylinderMesh(darkSteelMat, chromeMat);
+      excavatorGroup.add(stickCylinderMesh);
 
-      boomStructure.position.set(0, 0, 0.6);
-      craneGroup.add(boomStructure);
-
-      // Cable Mesh with animated Texture
-      cableTexture = createCableTexture();
-      cableTexture.wrapS = THREE.RepeatWrapping;
-      cableTexture.wrapT = THREE.RepeatWrapping;
-      cableTexture.repeat.set(1, 10);
-
-      const cableMat = new THREE.MeshStandardMaterial({ map: cableTexture, roughness: 0.3, metalness: 0.7 });
-      const cableGeo = new THREE.CylinderGeometry(0.06, 0.06, 1, 16);
-      cableGeo.translate(0, 0.5, 0);
-      cableMesh = new THREE.Mesh(cableGeo, cableMat);
-      craneGroup.add(cableMesh);
+      bucketCylinderMesh = createHydraulicCylinderMesh(darkSteelMat, chromeMat);
+      excavatorGroup.add(bucketCylinderMesh);
 
       const wrapperGroup = new THREE.Group();
-      wrapperGroup.name = "craneWrapper";
-      wrapperGroup.add(craneGroup);
+      wrapperGroup.name = "excavatorWrapper";
+      wrapperGroup.add(excavatorGroup);
       wrapperGroup.rotation.x = -Math.PI / 2;
       scene.add(wrapperGroup);
     }
 
-    // Helper: Construct rod connection between two points
-    function addStrut(parentGroup, p1, p2, radius, material) {
-      const v1 = new THREE.Vector3(...p1);
-      const v2 = new THREE.Vector3(...p2);
-      const distance = v1.distanceTo(v2);
+    // Helper: Silinder Hidrolik
+    function createHydraulicCylinderMesh(bodyMat, rodMat) {
+      const group = new THREE.Group();
 
-      const strutGeo = new THREE.CylinderGeometry(radius, radius, distance, 8);
-      strutGeo.translate(0, distance / 2, 0);
-      const strut = new THREE.Mesh(strutGeo, material);
+      const barrelGeo = new THREE.CylinderGeometry(0.14, 0.14, 1.8, 16);
+      barrelGeo.translate(0, 0.9, 0);
+      const barrel = new THREE.Mesh(barrelGeo, bodyMat);
 
-      strut.position.copy(v1);
-      const dir = v2.clone().sub(v1).normalize();
-      const up = new THREE.Vector3(0, 1, 0);
-      strut.quaternion.setFromUnitVectors(up, dir);
+      const rodGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.8, 16);
+      rodGeo.translate(0, 0.9, 0);
+      const rod = new THREE.Mesh(rodGeo, rodMat);
+      rod.position.y = 0.9;
+      rod.name = "rodArm";
 
-      parentGroup.add(strut);
-    }
-
-    function createCableTexture() {
-      const canvas = document.createElement('canvas');
-      canvas.width = 64; canvas.height = 64;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 0, 64, 64);
-      ctx.fillStyle = '#fbbf24'; ctx.fillRect(0, 0, 64, 20); ctx.fillRect(0, 32, 64, 16);
-      return new THREE.CanvasTexture(canvas);
+      group.add(barrel, rod);
+      return group;
     }
 
     function loadPreset(mode) {
       currentMode = mode;
 
-      ['btn-rain', 'btn-crane', 'btn-custom'].forEach(id => {
+      ['btn-rain', 'btn-excavator', 'btn-custom'].forEach(id => {
         document.getElementById(id).className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 transition-all";
       });
 
       document.getElementById('cross-vector-display').classList.add('hidden');
 
       const rainWrapper = scene.getObjectByName("rainCollectorWrapper");
-      const craneWrapper = scene.getObjectByName("craneWrapper");
+      const excavatorWrapper = scene.getObjectByName("excavatorWrapper");
 
       if (mode === 'rain') {
         document.getElementById('btn-rain').className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow";
         
-        vecA.set(3, 0, 4);       
-        vecB.set(4, 3, 12);      
+        vecA.set(3, 0, 4);       // N = 3i + 0j + 4k
+        vecB.set(4, 3, 12);      // H = 4i + 3j + 12k
         
         document.getElementById('vec-a-name').innerText = "Vektor Normal N (3, 0, 4)";
         document.getElementById('vec-b-name').innerText = "Vektor Air H (4, 3, 12)";
@@ -535,29 +533,29 @@
         setSliderRanges(10, 15);
 
         if (rainWrapper) rainWrapper.visible = true;
-        if (craneWrapper) craneWrapper.visible = false;
+        if (excavatorWrapper) excavatorWrapper.visible = false;
 
         controls.target.set(0, 3, 0);
         camera.position.set(12, 16, 10);
 
-      } else if (mode === 'crane') {
-        document.getElementById('btn-crane').className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow";
+      } else if (mode === 'excavator') {
+        document.getElementById('btn-excavator').className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow";
         
-        vecA.set(4, 3, 0);         
-        vecB.set(250, -700, -400); 
+        vecA.set(4, 3, 0);         // r = 4i + 3j + 0k (m)
+        vecB.set(1, 0, -3);        // F/Arm = 1i + 0j - 3k (m)
         
-        document.getElementById('vec-a-name').innerText = "Vektor Lengan r (4, 3, 0) m";
-        document.getElementById('vec-b-name').innerText = "Vektor Gaya F (250, -700, -400) N";
+        document.getElementById('vec-a-name').innerText = "Vektor Boom r (4, 3, 0) m";
+        document.getElementById('vec-b-name').innerText = "Vektor Arm/Bucket F (1, 0, -3) m";
         document.getElementById('label-mag-a').innerText = "Panjang Boom |r|:";
-        document.getElementById('label-mag-b').innerText = "Besar Gaya |F|:";
+        document.getElementById('label-mag-b').innerText = "Panjang Arm |F|:";
         document.getElementById('operation-tag').innerText = "Cross Product";
         document.getElementById('eff-label').innerText = "Efisiensi Torsi sin(θ)";
         document.getElementById('cross-vector-display').classList.remove('hidden');
 
-        setSliderRanges(10, 1000);
+        setSliderRanges(10, 10);
 
         if (rainWrapper) rainWrapper.visible = false;
-        if (craneWrapper) craneWrapper.visible = true;
+        if (excavatorWrapper) excavatorWrapper.visible = true;
 
         controls.target.set(2, 2, 1.5);
         camera.position.set(12, 14, 10);
@@ -569,9 +567,10 @@
         
         setSliderRanges(10, 20);
         if (rainWrapper) rainWrapper.visible = false;
-        if (craneWrapper) craneWrapper.visible = false;
+        if (excavatorWrapper) excavatorWrapper.visible = false;
       }
 
+      // Sync Sliders
       document.getElementById('ax').value = vecA.x;
       document.getElementById('ay').value = vecA.y;
       document.getElementById('az').value = vecA.z;
@@ -590,7 +589,7 @@
       });
       ['bx','by','bz'].forEach(id => {
         const elem = document.getElementById(id);
-        elem.min = -maxB; elem.max = maxB; elem.step = (maxB > 50) ? 10 : 1;
+        elem.min = -maxB; elem.max = maxB; elem.step = 1;
       });
     }
 
@@ -606,9 +605,9 @@
       if (currentMode === 'rain') {
         document.getElementById('vec-a-name').innerText = `Vektor Normal N (${vecA.x}, ${vecA.y}, ${vecA.z})`;
         document.getElementById('vec-b-name').innerText = `Vektor Air H (${vecB.x}, ${vecB.y}, ${vecB.z})`;
-      } else if (currentMode === 'crane') {
-        document.getElementById('vec-a-name').innerText = `Vektor Lengan r (${vecA.x}, ${vecA.y}, ${vecA.z}) m`;
-        document.getElementById('vec-b-name').innerText = `Vektor Gaya F (${vecB.x}, ${vecB.y}, ${vecB.z}) N`;
+      } else if (currentMode === 'excavator') {
+        document.getElementById('vec-a-name').innerText = `Vektor Boom r (${vecA.x}, ${vecA.y}, ${vecA.z}) m`;
+        document.getElementById('vec-b-name').innerText = `Vektor Arm/Bucket F (${vecB.x}, ${vecB.y}, ${vecB.z}) m`;
       }
 
       updateCalculations();
@@ -622,8 +621,9 @@
       const cross = new THREE.Vector3().crossVectors(vecA, vecB);
       const magCross = cross.length();
 
-      document.getElementById('mag-a').innerText = (currentMode === 'crane') ? `${magA.toFixed(2)} m` : magA.toFixed(2);
-      document.getElementById('mag-b').innerText = (currentMode === 'crane') ? `${magB.toFixed(2)} N` : magB.toFixed(2);
+      // UI Math Update
+      document.getElementById('mag-a').innerText = (currentMode === 'excavator') ? `${magA.toFixed(2)} m` : magA.toFixed(2);
+      document.getElementById('mag-b').innerText = (currentMode === 'excavator') ? `${magB.toFixed(2)} m` : magB.toFixed(2);
 
       let angleRad = 0;
       if (magA > 0 && magB > 0) {
@@ -633,7 +633,7 @@
       const angleDeg = angleRad * (180 / Math.PI);
       document.getElementById('angle-val').innerText = `${angleDeg.toFixed(2)}°`;
 
-      if (currentMode === 'crane') {
+      if (currentMode === 'excavator') {
         document.getElementById('product-label').innerText = "Besar Torsi |r × F|:";
         document.getElementById('product-val').innerText = `${magCross.toFixed(1)} N·m`;
         document.getElementById('cross-vector-display').innerText = `Vektor Torsi τ = (${cross.x.toFixed(0)}, ${cross.y.toFixed(0)}, ${cross.z.toFixed(0)}) N·m`;
@@ -643,40 +643,67 @@
         document.getElementById('eff-val').innerText = `${effPercent}%`;
 
         const originPivotMath = new THREE.Vector3(0, 0, 0.6);
+        const forceScale = 1.0;
+        const torqueScale = 0.2;
 
-        const forceScale = 0.005;
-        const torqueScale = 0.001;
-
-        updateArrow(arrowA, originPivotMath, vecA);
+        // Render Panah Vektor
+        updateArrow(arrowA, originPivotMath, vecA); // Vektor Hijau r (Boom)
         
         const tipPosMath = originPivotMath.clone().add(vecA);
-        updateArrow(arrowB, tipPosMath, vecB, forceScale);
-        updateArrow(arrowResult, originPivotMath, cross, torqueScale);
+        updateArrow(arrowB, tipPosMath, vecB, forceScale); // Vektor Kuning B (Arm)
+        updateArrow(arrowResult, originPivotMath, cross, torqueScale); // Vektor Ungu (Torsi)
 
-        if (craneGroup) {
-          const boomStructure = craneGroup.getObjectByName("boomStructure");
-          if (boomStructure && magA > 0) {
-            const unitAMath = vecA.clone().normalize();
-            const defaultUpMath = new THREE.Vector3(0, 0, 1);
-            const q = new THREE.Quaternion().setFromUnitVectors(defaultUpMath, unitAMath);
-            boomStructure.quaternion.copy(q);
-            boomStructure.scale.set(1, 1, magA / 5.0);
+        // 1. Orientasi & Skala Boom (Vektor A Hijau)
+        if (boomGroup && magA > 0) {
+          const unitAMath = vecA.clone().normalize();
+          const defaultUpMath = new THREE.Vector3(0, 0, 1);
+          const q = new THREE.Quaternion().setFromUnitVectors(defaultUpMath, unitAMath);
+          boomGroup.quaternion.copy(q);
+          boomGroup.scale.set(1, 1, magA / 5.0);
+        }
+
+        // 2. Transformasi Arm Ekskavator Mengikuti Vektor B Kuning secara Presisi
+        if (armGroup && magB > 0) {
+          const tipThree = mathToThree(tipPosMath);
+          armGroup.position.copy(tipThree);
+
+          const unitBMath = vecB.clone().normalize();
+          const defaultUpMath = new THREE.Vector3(0, 0, 1);
+          const qArm = new THREE.Quaternion().setFromUnitVectors(defaultUpMath, unitBMath);
+          armGroup.quaternion.copy(qArm);
+          armGroup.scale.set(1, 1, magB / 1.0); // Skala panjang Arm sesuai magnitudo Vektor B
+
+          // Posisikan Bucket tepat di Ujung Vektor B Kuning
+          if (bucketGroup) {
+            bucketGroup.position.set(0, 0, magB);
           }
         }
 
-        if (cableMesh && magB > 0) {
-          const tipPosThree = mathToThree(tipPosMath);
-          cableMesh.position.copy(tipPosThree);
+        // 3. Silinder Hidrolik
+        if (boomCylinderMesh && magA > 0) {
+          const midPointMath = vecA.clone().multiplyScalar(0.4);
+          const midThree = mathToThree(originPivotMath.clone().add(midPointMath));
+          boomCylinderMesh.position.copy(mathToThree(originPivotMath.clone().add(new THREE.Vector3(0, 0, -0.4))));
 
-          const forceDispThree = mathToThree(vecB.clone().multiplyScalar(forceScale));
-          const cableLen = forceDispThree.length();
+          const dirThree = midThree.clone().sub(boomCylinderMesh.position);
+          const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirThree.clone().normalize());
+          boomCylinderMesh.quaternion.copy(q);
+          
+          const rod = boomCylinderMesh.getObjectByName("rodArm");
+          if(rod) rod.scale.set(1, dirThree.length() / 1.8, 1);
+        }
 
-          cableMesh.scale.set(1, cableLen, 1);
+        if (stickCylinderMesh && magA > 0 && magB > 0) {
+          const boomMidThree = mathToThree(originPivotMath.clone().add(vecA.clone().multiplyScalar(0.6)));
+          const armMidThree = mathToThree(tipPosMath.clone().add(vecB.clone().multiplyScalar(0.4)));
+          
+          stickCylinderMesh.position.copy(boomMidThree);
+          const dirThree = armMidThree.clone().sub(stickCylinderMesh.position);
+          const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirThree.clone().normalize());
+          stickCylinderMesh.quaternion.copy(q);
 
-          const unitFThree = forceDispThree.clone().normalize();
-          const up = new THREE.Vector3(0, 1, 0);
-          const q = new THREE.Quaternion().setFromUnitVectors(up, unitFThree);
-          cableMesh.quaternion.copy(q);
+          const rod = stickCylinderMesh.getObjectByName("rodArm");
+          if(rod) rod.scale.set(1, dirThree.length() / 1.8, 1);
         }
 
       } else {
@@ -748,6 +775,7 @@
       requestAnimationFrame(animate);
       controls.update();
 
+      // Animasi Hujan
       if (rainParticlesGroup && currentMode === 'rain') {
         const positions = rainParticlesGroup.geometry.attributes.position.array;
         const dirHMath = vecB.clone().normalize();
@@ -764,10 +792,6 @@
           }
         }
         rainParticlesGroup.geometry.attributes.position.needsUpdate = true;
-      }
-
-      if (cableTexture && currentMode === 'crane') {
-        cableTexture.offset.y -= 0.02;
       }
 
       renderer.render(scene, camera);
